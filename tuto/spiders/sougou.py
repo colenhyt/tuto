@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = 'colen'
 
 from scrapy.spider import Spider
@@ -7,15 +8,21 @@ from scrapy.http import Request
 from bs4 import BeautifulSoup as bs
 import scrapy
 
-class DmozSpider(Spider):
-    name = "dmoz"
-    # allowed_domains = ["dmoz.org"]
-    start_urls = [
-        "http://www.dmoz.org/Computers/Programming/Languages/Python/Books/"]
+class SougouSpider(Spider):
+    name = "sougou"
+    # allowed_domains = ["sogou.com"]
+
+    def __init__(self, category=None, *args, **kwargs):
+        self.start_urls = []
+        words=['育儿','早教']
+        for word in words:
+            url = "http://weixin.sogou.com/weixin?query="+word
+            self.start_urls.append(url)
+            print url
 
     def parse(self, response):
-        filename = response.url.split("/")[-2]
-        open(filename, 'wb').write(response.body)
+        # filename = response.url.split("/")[-2]
+        # open(filename, 'wb').write(response.body)
         sel = Selector(response)
         soup = bs(response.body)
         itemsurls = []
@@ -27,17 +34,9 @@ class DmozSpider(Spider):
             item['link'] = site.xpath('a/@href').extract()
             item['desc'] = site.xpath('text()').extract()
             items.append(item)
-            # print item['link']
-            item['link'] = "http://www.pearsonhighered.com/educator/academic/product/0,,0130260363,00%2Ben-USS_01DBC.html"
-            # qq = self.make_requests_from_url(item['link'])
-            # qq.replace(callback=self.parse_post)
-            # qq = Request(url=item['link'],callback=self.parse_post)
-            # itemsurls.append(qq)
         return items
 
     def parse_post(self, response):
-        # filename = response.url.split("/")[-2]
-        print 'afaaaaaaaaaaaaaaaa'
         items = []
         item = DmozItem()
         item['title'] = 'abc'
