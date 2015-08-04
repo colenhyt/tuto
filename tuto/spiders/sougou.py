@@ -4,6 +4,7 @@ __author__ = 'colen'
 from scrapy.spider import Spider
 from scrapy.selector import Selector
 from tuto.items import DmozItem
+from tuto.data.datamgr import DataMgr
 from scrapy.http import Request
 from bs4 import BeautifulSoup as bs
 import scrapy
@@ -14,10 +15,10 @@ class SougouSpider(Spider):
 
     def __init__(self, category=None, *args, **kwargs):
         self.start_urls = []
-        words=['育儿','早教']
+        words = DataMgr.getwords(8)
         for word in words:
-            url = "http://weixin.sogou.com/weixin?query="+word
-            self.start_urls.append(url)
+            url = "http://weixin.sogou.com/weixin?query="+word[1]
+            # self.start_urls.append(url)
             print url
 
     def parse(self, response):
