@@ -55,3 +55,9 @@ class PagingTagParser():
       self.pagingurles = aes
       return True
     return False
+
+  #根据提示自行构造兄弟链接
+  def a3_createUrls(self):
+    path = ("//div[contains(text(),'找到约')]").decode("utf-8")
+    es = self.doc.xpath(path)
+    print es
