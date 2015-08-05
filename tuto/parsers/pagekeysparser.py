@@ -4,30 +4,43 @@ __author__ = 'colen'
 from lxml.html import fromstring
 from lxml import etree
 from io import StringIO, BytesIO
+
 import lxml.html
 import lxml.etree
 from tuto.util.utils import *
+from tuto.parsers.pagingtagparser import *
 
-base_url="http://weixin.sougou.com"
+base_url="http://weixin.sogou.com/weixin?query="
 
 class PageKeysParser():
     def __init__(self,itemCount=5,itemSame=1):
         self.type=0
+        self.itemkeys = []
         self.eleMaps={}
-        self.sortKeys = []
         self.itemMinCount = itemCount     #item数量阀值
         self.itemSame = itemSame        #item相似度阀值
 
     def parse(self,htmlStr):
         self.doc = lxml.html.fromstring(htmlStr, base_url)
-        tagNames = ["div","li"]
-        chooseKeys = ""
+        pagingparser = PagingTagParser()
+        found = pagingparser.parse(self.doc,base_url)
+        if (found):
+          print '找到当前页分页链接:'+str(len(pagingparser.pagingurles))
+        return 0
+        tagNames = ["div","li","p"]
+        itemkeys_pre = []
         for tagname in tagNames:
-            chooseKeys = self.parse_findItems(tagname)
-            if (len(chooseKeys)>0):break
-        print chooseKeys
+            itemkeys_pre = self.parse_itemskeys(tagname)
+            if (len(itemkeys_pre)>0):break
+        self.itemkeys = itemkeys_pre
+        print itemkeys_pre
 
-    def parse_findItems(self,tagName):
+    def parse_pagingkeys(self):
+        urls = self.doc.xpath("a")
+        print urls
+        return urls
+
+    def parse_itemskeys(self,tagName):
         tagkeys = self._findTags(tagName)
         chooseKeys = []
         if (len(tagkeys)==1):
