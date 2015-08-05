@@ -21,3 +21,11 @@ class DmozItem(Item):
 class HnItem(Item):
     title = Field()
     link = Field()
+
+class PublicItem(Item):
+    hao = Field()
+    name = Field()
+    openid = Field()
+    desc = Field()
+    auth = Field()
+    lastupdate = Field()

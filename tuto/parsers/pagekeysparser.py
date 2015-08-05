@@ -12,10 +12,13 @@ from tuto.parsers.pagingtagparser import *
 
 base_url="http://weixin.sogou.com/weixin?query="
 
+#parser得到itemskey,以及兄弟页key
 class PageKeysParser():
     def __init__(self,itemCount=5,itemSame=1):
         self.type=0
-        self.itemkeys = []
+        self.itemskeys = []
+        self.pagingkeys = []
+        self.pagingurls = []
         self.eleMaps={}
         self.itemMinCount = itemCount     #item数量阀值
         self.itemSame = itemSame        #item相似度阀值
@@ -25,15 +28,22 @@ class PageKeysParser():
         pagingparser = PagingTagParser()
         found = pagingparser.parse(self.doc,base_url)
         if (found):
-          print '找到当前页分页链接:'+str(len(pagingparser.pagingurles))
-        return 0
+          self.pagingkeys = pagingparser.pagingKeys
+          self.pagingurls = pagingparser.urls
+          print '找到当前页分页链接:'+str(len(self.pagingurls))
+
         tagNames = ["div","li","p"]
         itemkeys_pre = []
         for tagname in tagNames:
             itemkeys_pre = self.parse_itemskeys(tagname)
             if (len(itemkeys_pre)>0):break
-        self.itemkeys = itemkeys_pre
+        self.itemskeys = itemkeys_pre
         print itemkeys_pre
+        return True
+
+    def getitemes(self):
+      if (len(self.itemskeys)>0):
+        return self.eleMaps[self.itemskeys[0]]
 
     def parse_pagingkeys(self):
         urls = self.doc.xpath("a")
@@ -96,6 +106,7 @@ class PageKeysParser():
             allkey = ele.tag+"["
             inilen = len(allkey)
             for v in items:
+                if (v[0]!='class'):continue
                 if (len(allkey)>inilen):
                     allkey += " and "
                 allkey += "@"+v[0]+"='"+v[1]+"'"
