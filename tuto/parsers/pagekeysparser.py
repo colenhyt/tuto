@@ -8,9 +8,8 @@ from io import StringIO, BytesIO
 import lxml.html
 import lxml.etree
 from tuto.util.utils import *
+from tuto.data.datamgr import *
 from tuto.parsers.pagingtagparser import *
-
-base_url="http://weixin.sogou.com/weixin?query="
 
 #parser得到itemskey,以及兄弟页key
 class PageKeysParser():
@@ -23,7 +22,7 @@ class PageKeysParser():
         self.itemMinCount = itemCount     #item数量阀值
         self.itemSame = itemSame        #item相似度阀值
 
-    def parse(self,htmlStr):
+    def parse(self,htmlStr,base_url):
         self.doc = lxml.html.fromstring(htmlStr, base_url)
         pagingparser = PagingTagParser()
         found = pagingparser.parse(self.doc,base_url)
@@ -38,7 +37,8 @@ class PageKeysParser():
             itemkeys_pre = self.parse_itemskeys(tagname)
             if (len(itemkeys_pre)>0):break
         self.itemskeys = itemkeys_pre
-        print itemkeys_pre
+        if (len(self.itemskeys)>0):
+          print "找到itemkeys:",itemkeys_pre
         return True
 
     def getitemes(self):
@@ -144,8 +144,14 @@ class PageKeysParser():
     def isItem(self):
         return 1
 
-f = open('../../file/sougou.html')
-# read all file content
-ht_string = f.read()
-page = PageKeysParser()
-page.parse(ht_string)
+def test():
+  f = open('../../file/sougou.html')
+  # read all file content
+  ht_string = f.read()
+  page = PageKeysParser()
+  page.parse(ht_string)
+  datamgr = DataMgr()
+  datamgr.insertSiteTemplate('sogou.com',page.itemskeys,page.pagingkeys)
+
+
+# test()

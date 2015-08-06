@@ -2,13 +2,15 @@
 
 __author__ = 'colen'
 import MySQLdb
+from tuto.util.basic import *
+
 
 SQL_INSERT_URL = "insert into siteurl (temp_id,url,status,crdate) values(%s,%s,%s,now())"
 SQL_INSERT_STEMPLATE = "insert into stemplate (sitekey,itemskeys,pagingkeys,status,crdate) values(%s,%s,%s,%s,now())"
 
-class DataMgr():
+class DataMgr(Singleton):
     def __init__(self):
-        self.aa = 0
+      self.aa = 10
 
     def conn(self):
       conn = MySQLdb.connect(host="localhost", port=3306, user="root", passwd="123a123@", db="box",charset="utf8")
@@ -35,11 +37,11 @@ class DataMgr():
         return result
 
     def geturls(self,sitekey):
-        sql = "select a.*,b.sitekey from siteurl a,stemplate b where a.temp_id=b.id and a.status=0 and a.sitekey='"+sitekey+"'"
+        sql = "select a.*,b.sitekey from siteurl a,stemplate b where a.temp_id=b.id and a.status=0 and b.sitekey='"+sitekey+"'"
         return self.gettable(sql)
 
     def getsitetemplates(self,sitekey):
-        sql = "select * from stemplate where status=0 and sitekey="+sitekey
+        sql = "select * from stemplate where status=0 and sitekey='"+sitekey+"'"
         return self.gettable(sql)
 
     def getwords(self,wordtype=1):
@@ -57,13 +59,18 @@ class DataMgr():
       params = [temp_id,url,0]
       self.update(SQL_INSERT_URL,params)
 
-    def insertSiteTemplate(self,sitekey,itemskeys,pagingkeys):
-      params = [sitekey,itemskeys,pagingkeys,1]
+    def insertSiteTemplate(self,*params):
+      params = [params[0],str(params[1]),str(params[2]),1]
       self.update(SQL_INSERT_STEMPLATE,params)
 
-aa = DataMgr()
-siteurl = [[1,'DFA',1],[1,'f23ff',5],[1,'ww1w',4]]
-aa.inserturls(siteurl)
+    @classmethod
+    def at(cls):
+      print cls
+
+global g_dataMgr
+
+g_dataMgr = DataMgr()
+
 # bb = aa.geturls()
 # for k in bb:
 #     print k[1]

@@ -31,8 +31,11 @@ class PagingTagParser():
     if (found==True):
       urls = []
       for urle in  self.pagingurles:
-        url = urle.xpath("//a/@href")
-        urls.append(url[0])
+        url = urle.get('href')
+        if (url.find("http")==-1):
+          base_url = urle.base_url
+          url = base_url+url
+        urls.append(url)
       self.urls = urls
 
     return found
