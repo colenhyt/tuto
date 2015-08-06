@@ -10,11 +10,13 @@ import lxml.etree
 from tuto.util.utils import *
 from tuto.data.datamgr import *
 from tuto.parsers.pagingtagparser import *
+from tuto.parsers.itemsfounder import *
 
 #parser得到itemskey,以及兄弟页key
 class PageKeysParser():
     def __init__(self,itemCount=5,itemSame=1):
         self.type=0
+        self.modelparser = ModelParser()
         self.itemskeys = []
         self.pagingkeys = []
         self.pagingurls = []
@@ -38,6 +40,7 @@ class PageKeysParser():
             if (len(itemkeys_pre)>0):break
         self.itemskeys = itemkeys_pre
         if (len(self.itemskeys)>0):
+          self.items = self.modelparser.parse(self.eleMaps[self.itemskeys[0]],'aaa')
           print "找到itemkeys:",itemkeys_pre
         return True
 
@@ -144,9 +147,7 @@ def test():
   # read all file content
   ht_string = f.read()
   page = PageKeysParser()
-  page.parse(ht_string)
-  datamgr = DataMgr()
-  datamgr.insertSiteTemplate('sogou.com',page.itemskeys,page.pagingkeys)
+  page.parse(ht_string,"http://weixin.sogou.com/weixin")
 
 
-# test()
+test()

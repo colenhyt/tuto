@@ -9,6 +9,8 @@ SQL_INSERT_URL = "insert into siteurl (temp_id,url,status,crdate) values(%s,%s,%
 SQL_INSERT_STEMPLATE = "insert into stemplate (sitekey,itemskeys,pagingkeys,status,crdate) values(%s,%s,%s,%s,now())"
 
 class DataMgr(Singleton):
+    objs_locker =  threading.Lock()
+
     def __init__(self):
       self.aa = 10
       self.urlsmap = {}
@@ -67,34 +69,46 @@ class DataMgr(Singleton):
         return self.gettable(sql,[wordtype])
 
     def updateurl(self,url,temp_id=0,status=1):
-      if (self.urlsmap.has_key(url)):
-        self.urlsmap[url][2] = status
-        params = [status,url]
-        self.update("update siteurl set status=%s where url=%s",params)
-      else:
-        self.inserturl(url,temp_id,status)
+      self.objs_locker.acquire()
+      try:
+        if (self.urlsmap.has_key(url)):
+          self.urlsmap[url][2] = status
+          params = [status,url]
+          self.update("update siteurl set status=%s where url=%s",params)
+        else:
+          self.inserturl(url,temp_id,status)
+      finally:
+        self.objs_locker.release()
 
     def inserturls(self,urls,temp_id=0):
-      newitems = []
-      newurls = []
-      for url in urls:
-        if (self.urlsmap.has_key(url)):
-          continue
-        newurls.append(url)
-        item = [temp_id,url,0]
-        newitems.append(item)
-        self.urlsmap[url] = item
+      self.objs_locker.acquire()
+      try:
+        newitems = []
+        newurls = []
+        for url in urls:
+          if (self.urlsmap.has_key(url)):
+            continue
+          newurls.append(url)
+          item = [temp_id,url,0]
+          newitems.append(item)
+          self.urlsmap[url] = item
 
-      if (len(newitems)>0):
-        self.update(SQL_INSERT_URL,newitems,True)
-      return newurls
+        if (len(newitems)>0):
+          self.update(SQL_INSERT_URL,newitems,True)
+        return newurls
+      finally:
+        self.objs_locker.release()
 
     def inserturl(self,url,temp_id=0,status=0):
-      if (self.urlsmap.has_key(url)):return
+      self.objs_locker.acquire()
+      try:
+        if (self.urlsmap.has_key(url)):return
 
-      self.urlsmap[url] = [url,temp_id,status]
-      params = [temp_id,url,0]
-      self.update(SQL_INSERT_URL,params)
+        self.urlsmap[url] = [url,temp_id,status]
+        params = [temp_id,url,0]
+        self.update(SQL_INSERT_URL,params)
+      finally:
+        self.objs_locker.release()
 
     def insertSiteTemplate(self,*params):
       params = [params[0],str(params[1]),str(params[2]),1]

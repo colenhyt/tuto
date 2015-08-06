@@ -56,15 +56,15 @@ class SogouSpider(Spider):
         found = self.keysparser.parse(response.body,baseurl)
         if (found):
           temp_id = self.datamgr.insertSiteTemplate(self.sitekey,self.keysparser.itemskeys,self.keysparser.pagingkeys)
-          self.temp_id = temp_id
+          self.template = [temp_id,self.keysparser.itemskeys,self.keysparser.pagingkeys]
           purls = self.datamgr.inserturls(self.keysparser.pagingurls,temp_id)
           nextsiteurls.extend(purls)
       else:
-        self.temp_id = stemplate[0]
-        keys = [eval(stemplate[2]),eval(stemplate[3])]
-        found1,found2 = self.itemsfounder.find(response.body,baseurl,keys)
+        self.template = [stemplate[0],eval(stemplate[2]),eval(stemplate[3])]
+        keys = [self.template[1],self.template[2]]
+        found1,found2 = self.itemsfounder.find(response.body,baseurl,keys,self.sitekey)
         if (found2):
-          purls = self.datamgr.inserturls(self.itemsfounder.pagingurls,stemplate[0])
+          purls = self.datamgr.inserturls(self.itemsfounder.pagingurls,self.template[0])
           nextsiteurls.extend(purls)
 
       self.datamgr.updateurl(baseurl,temp_id=self.temp_id)
@@ -76,12 +76,10 @@ class SogouSpider(Spider):
 
     def parse_siteurl(self, response):
       baseurl = response.url
-      self.datamgr.updateurl(baseurl,temp_id=self.temp_id)
+      self.datamgr.updateurl(baseurl,temp_id=self.template[0])
+      keys = [self.template[1],self.template[2]]
+      found1,found2 = self.itemsfounder.find(response.body,baseurl,keys,self.sitekey)
       items = []
-      item = DmozItem()
-      item['title'] = 'abc'
-      items.append(item)
-      item = DmozItem()
-      item['title'] = 'aaaeee'
-      items.append(item)
+      # if (found1):
+
       return items
