@@ -11,6 +11,16 @@ SQL_INSERT_STEMPLATE = "insert into stemplate (sitekey,itemskeys,pagingkeys,stat
 class DataMgr(Singleton):
     def __init__(self):
       self.aa = 10
+      self.urlsmap = {}
+      self.initData()
+
+    def initData(self):
+      sql_allurl = "select id,url,temp_id,status from siteurl"
+      tuples = self.gettable(sql_allurl)
+      for t in tuples:
+        url = list(t)
+        self.urlsmap[url[1]] = url
+      print "初始化urls map:",len(self.urlsmap)
 
     def conn(self):
       conn = MySQLdb.connect(host="localhost", port=3306, user="root", passwd="123a123@", db="box",charset="utf8")
@@ -18,59 +28,88 @@ class DataMgr(Singleton):
 
     def update(self,sqlstr,params,isBatch=False):
       conn = self.conn();
+      lastrowid = 0
       cursor = conn.cursor()
       if (isBatch):
         cursor.executemany(sqlstr,params)
       else:
         cursor.execute(sqlstr,params)
+        lastrowid = int(cursor.lastrowid)
       conn.commit()
       cursor.close()
       conn.close()
+      return lastrowid
 
-    def gettable(self,sqlstr):
+    def gettable(self,sqlstr,params=None):
         conn = self.conn();
         cursor = conn.cursor()
-        cursor.execute(sqlstr)
+        cursor.execute(sqlstr,params)
         result = cursor.fetchall()
         cursor.close()
         conn.close()
         return result
 
-    def geturls(self,sitekey):
-        sql = "select a.*,b.sitekey from siteurl a,stemplate b where a.temp_id=b.id and a.status=0 and b.sitekey='"+sitekey+"'"
-        return self.gettable(sql)
+    def geturls(self,sitekey,status=1):
+        sql = "select a.*,b.sitekey from siteurl a,stemplate b where a.temp_id=b.id and a.status=%s and b.sitekey=%s"
+        params = [status,sitekey]
+        return self.gettable(sql,params)
 
     def getsitetemplates(self,sitekey):
-        sql = "select * from stemplate where status=0 and sitekey='"+sitekey+"'"
-        return self.gettable(sql)
+      sql = "select id,sitekey,itemskeys, pagingkeys from stemplate where status=1 and sitekey='"+sitekey+"'"
+      tuple = self.gettable(sql)
+      temp = None
+      if (len(tuple)>0):
+        temp = list(tuple[0])
+      return temp
 
     def getwords(self,wordtype=1):
-        sql = "select * from words where status is null and wordtype="+str(wordtype)
-        return self.gettable(sql)
+        sql = "select * from words where status is null and wordtype=%s"
+        return self.gettable(sql,[wordtype])
 
-    def updateSiteurl(self,id,status=1):
-      params = [status,id]
-      self.update("update siteurl set status=%s where id=%s",params)
+    def updateurl(self,url,temp_id=0,status=1):
+      if (self.urlsmap.has_key(url)):
+        self.urlsmap[url][2] = status
+        params = [status,url]
+        self.update("update siteurl set status=%s where url=%s",params)
+      else:
+        self.inserturl(url,temp_id,status)
 
-    def inserturls(self,urls):
-     self.update(SQL_INSERT_URL,urls,True)
+    def inserturls(self,urls,temp_id=0):
+      newitems = []
+      newurls = []
+      for url in urls:
+        if (self.urlsmap.has_key(url)):
+          continue
+        newurls.append(url)
+        item = [temp_id,url,0]
+        newitems.append(item)
+        self.urlsmap[url] = item
 
-    def inserturl(self,temp_id,url):
+      if (len(newitems)>0):
+        self.update(SQL_INSERT_URL,newitems,True)
+      return newurls
+
+    def inserturl(self,url,temp_id=0,status=0):
+      if (self.urlsmap.has_key(url)):return
+
+      self.urlsmap[url] = [url,temp_id,status]
       params = [temp_id,url,0]
       self.update(SQL_INSERT_URL,params)
 
     def insertSiteTemplate(self,*params):
       params = [params[0],str(params[1]),str(params[2]),1]
-      self.update(SQL_INSERT_STEMPLATE,params)
+      return self.update(SQL_INSERT_STEMPLATE,params)
+
+    def hasSiteurl(self,url):
+      return True
 
     @classmethod
     def at(cls):
       print cls
 
-global g_dataMgr
 
-g_dataMgr = DataMgr()
+aa = DataMgr()
 
-# bb = aa.geturls()
+bb = aa.getsitetemplates("sogou.com")
 # for k in bb:
 #     print k[1]

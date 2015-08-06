@@ -45,11 +45,6 @@ class PageKeysParser():
       if (len(self.itemskeys)>0):
         return self.eleMaps[self.itemskeys[0]]
 
-    def parse_pagingkeys(self):
-        urls = self.doc.xpath("a")
-        print urls
-        return urls
-
     def parse_itemskeys(self,tagName):
         tagkeys = self._findTags(tagName)
         chooseKeys = []

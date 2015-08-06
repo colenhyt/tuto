@@ -23,26 +23,55 @@ class PagingTagParser():
     self.base_url = base_url
 
     #1: find by keys:
-    found = self.a1_findByKeys()
+    found = self.a1_parseByKeys()
     if (found==False):
       #2: find with related url:
-      found = self.a2_findWithBaseUrl()
+      found = self.a2_parseWithBaseUrl(base_url)
 
     if (found==True):
       urls = []
       for urle in  self.pagingurles:
         url = urle.get('href')
         if (url.find("http")==-1):
-          base_url = urle.base_url
+          if (urle.base_url.find("?")>0):
+            base_url = urle.base_url[0:urle.base_url.find("?")]
+          else:
+            base_url = urle.base_url
           url = base_url+url
         urls.append(url)
       self.urls = urls
 
     return found
 
-  def a1_findByKeys(self):
+  def findUrls(self,htmlDoc,base_url,keys):
+    self.doc = htmlDoc
+    findtype = keys[0]
+    targettags = []
+    if (findtype==PAGINGTYPE_KEYS):
+      eles = self.__finditems(keys[1],keys[2])
+      if (len(eles)>0):
+        ae = eles[0].xpath("a")
+        if (len(ae)>=self.pagingMinCount):
+          self.pagingurles = ae
+    else:
+      self.a2_parseWithBaseUrl(keys[1])
+
+    urls = []
+    for urle in  self.pagingurles:
+      url = urle.get('href')
+      if (url.find("http")==-1):
+        if (urle.base_url.find("?")>0):
+          base_url = urle.base_url[0:urle.base_url.find("?")]
+        else:
+          base_url = urle.base_url
+        url = base_url+url
+      urls.append(url)
+    self.urls = urls
+    return len(self.urls)>0
+
+  def a1_parseByKeys(self):
     found = False
-    foundtags,keytag,keyword=self._findKeytags();
+    foundtags,keytag,keyword=self._parseKeytags();
     for k in foundtags:
       ae = k.xpath("a")
       if (len(ae)>=self.pagingMinCount):
@@ -54,7 +83,7 @@ class PagingTagParser():
     # es = self.doc.xpath(a)
     return found
 
-  def _findKeytags(self):
+  def _parseKeytags(self):
     words = ['下一页','上一页']
     tagnames = ['div','p']
     keyword = ""
@@ -62,21 +91,25 @@ class PagingTagParser():
     targetags = []
     for k in words:
       for tag in tagnames:
-        a = ("//*[contains(text(),'"+k+"')]/parent::"+tag).decode("utf-8")
-        eles = self.doc.xpath(a)
+        eles = self.__finditems(tag,k)
         if (len(eles)>0):
           targetags.append(eles[0])
           keyword = k
           keytag = tag
     return targetags,keytag,keyword
 
+  def __finditems(self,tagname,keyword):
+    a = ("//*[contains(text(),'"+keyword+"')]/parent::"+tagname).decode("utf-8")
+    eles = self.doc.xpath(a)
+    return eles
+
 #url相似度分析:
-  def a2_findWithBaseUrl(self):
+  def a2_parseWithBaseUrl(self,relate_url):
     #完全重合:
-    aes = self.doc.xpath("//a[contains(@href,'"+self.base_url+"')]")
+    aes = self.doc.xpath("//a[contains(@href,'"+relate_url+"')]")
     if (len(aes)>=self.pagingMinCount):
       self.pagingurles = aes
-      self.pagingKeys = [PAGINGTYPE_SAMEURL,self.base_url]
+      self.pagingKeys = [PAGINGTYPE_SAMEURL,relate_url]
       return True
     return False
 
