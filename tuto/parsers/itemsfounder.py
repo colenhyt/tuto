@@ -88,8 +88,7 @@ class ModelParser():
 
 #根据关键词找不到，递归相似关键词
 #查找可能存在文本的标签有:div,span,p,h1,h2,h3,h4,table/tr/td
-  def parse(self,eles,sitekey):
-    keywords = ["微信号","功能介绍","认证","openid"]
+  def parse(self,eles,keywords=[]):
     wordslist = []
     for e in eles:
       words = {}

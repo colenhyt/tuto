@@ -12,6 +12,19 @@ from tuto.data.datamgr import *
 from tuto.parsers.pagingtagparser import *
 from tuto.parsers.itemsfounder import *
 
+def _filterByWords(e1,e2,words):
+  path = "./descendant-or-self::*"
+  for w in words:
+    path += "[contains(text(),'"+w+"')]"
+    e1es = e1.xpath(path)
+    e2es = e2.xpath(path)
+    if (len(e1es)>0):
+      return True;
+    elif (len(e2es)>0):
+      return False
+
+  return None
+
 #parser得到itemskey,以及兄弟页key
 class PageKeysParser():
     def __init__(self,itemCount=5,itemSame=1):
@@ -24,7 +37,7 @@ class PageKeysParser():
         self.itemMinCount = itemCount     #item数量阀值
         self.itemSame = itemSame        #item相似度阀值
 
-    def parse(self,htmlStr,base_url):
+    def parse(self,htmlStr,base_url,modelkeys = []):
         self.doc = lxml.html.fromstring(htmlStr, base_url)
         pagingparser = PagingTagParser()
         found = pagingparser.parse(self.doc,base_url)
@@ -37,10 +50,17 @@ class PageKeysParser():
         itemkeys_pre = []
         for tagname in tagNames:
             itemkeys_pre = self.parse_itemskeys(tagname)
+            if (len(itemkeys_pre)>1):
+              #根据关键词包含进行去重:
+              found1 = _filterByWords(self.eleMaps[itemkeys_pre[0]][0],self.eleMaps[itemkeys_pre[1]][0],modelkeys)
+              if (found1==True):
+                itemkeys_pre = [itemkeys_pre[0]]
+              elif (found1==False):
+                itemkeys_pre = [itemkeys_pre[1]]
             if (len(itemkeys_pre)>0):break
         self.itemskeys = itemkeys_pre
         if (len(self.itemskeys)>0):
-          self.items = self.modelparser.parse(self.eleMaps[self.itemskeys[0]],'aaa')
+          self.items = self.modelparser.parse(self.eleMaps[self.itemskeys[0]],modelkeys)
           print "找到itemkeys:",itemkeys_pre
         return True
 
@@ -143,11 +163,16 @@ class PageKeysParser():
         return 1
 
 def test():
-  f = open('../../file/sougou.html')
-  # read all file content
-  ht_string = f.read()
   page = PageKeysParser()
-  page.parse(ht_string,"http://weixin.sogou.com/weixin")
+  f = open('../../file/sougou.html')
+  ht_string = f.read()
+  # keywords = ["微信号","功能介绍","认证","openid"]
+  # page.parse(ht_string,"http://weixin.sogou.com/weixin",keywords)
+
+  f = open('../../file/5118.html')
+  ht_string = f.read()
+  keywords = ["平均阅读量","平均点赞量","排名位数"]
+  page.parse(ht_string,"http://www.5118.com/weixin/officials/search/",keywords)
 
 
 test()
