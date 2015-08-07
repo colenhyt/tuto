@@ -62,8 +62,8 @@ class ModelParser():
     text = ""
     #1. 找自己及子节点属性:
     path = ("./descendant-or-self::*/attribute::*")
-    # if (len(keyword)>0):
-    #   path += "[contains(text(),'"+keyword+"')]"
+    if (len(keyword)>0):
+      path += "[contains(text(),'"+keyword+"')]"
     attrvalues = element.xpath(path)
     if (len(attrvalues)<=0):return False,""
 
@@ -91,7 +91,6 @@ class ModelParser():
   def parse(self,eles,sitekey):
     keywords = ["微信号","功能介绍","认证","openid"]
     wordslist = []
-    word1 = ""
     for e in eles:
       words = {}
       for key in keywords:
@@ -103,14 +102,25 @@ class ModelParser():
           found,word = self._findAttrByElement(e,keyword)
           if (found):
             words[key]= word
+      #找链接:
+      links = []
+      les = e.xpath("./descendant-or-self::a")
+      for le in les:
+        hrefAtt = le.xpath("./attribute::href")
+        link = []
+        if (len(hrefAtt)>0):
+          link.append(hrefAtt[0])
+        if (le.text!=None and len(le.text)>0):
+          link.append(le.text)
+        links.append(link)
 
       if (len(words)>0):
-        wordslist.append(words)
-
+        wordslist.append([words,links])
 
     for words in wordslist:
-      for k in words:
-        print k,words[k]
+      for k in words[0]:
+        print k,words[0][k]
+      print "links",words[1]
 
     return False
 
