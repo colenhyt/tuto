@@ -40,3 +40,17 @@ def tagSameScore(tag1,tag2):
     elif (tagnames1==tagnames2) :              #子节点名一致
         return 0.8
     return 0
+
+def _isImgUrl(url):
+  if (url.find("http")>=0 and (url.find(".jpg")>0 or url.find(".gif")>0 or url.find(".png")>0)):
+    return True
+  return False
+
+def _filterIgnore(url,ignorekeys=[]):
+  for ig in ignorekeys:
+    if (url.find(ig)>0):return True
+  if (len(url)>500):
+    print url
+    return True
+
+  return False

@@ -65,7 +65,7 @@ class PagingTagParser():
         else:
           base_url = urle.base_url
         url = base_url+url
-      urls.append(url)
+      urls.append([url,urle.text])
     self.urls = urls
     return len(self.urls)>0
 

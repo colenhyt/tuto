@@ -27,7 +27,7 @@ class SogouSpider(Spider):
 
         urlitems = []
         #1:爬内容页:
-        urls = self.datamgr.geturls(self.sitekey)
+        urls = self.datamgr.geturls(sitekey=self.sitekey)
         for uitem in urls:
           url = uitem[2]
           urlitems.append(Request(url,callback=self.parse_siteurl))

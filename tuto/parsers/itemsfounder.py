@@ -109,8 +109,10 @@ class ModelParser():
         link = []
         if (len(hrefAtt)>0):
           link.append(hrefAtt[0])
-        if (le.text!=None and len(le.text)>0):
-          link.append(le.text)
+        if (le.text!=None and len(le.text.strip())>0):
+          link.append(le.text.strip())
+        else:
+          link.append("")
         links.append(link)
 
       if (len(words)>0):

@@ -3,10 +3,13 @@
 __author__ = 'colen'
 import MySQLdb
 from tuto.util.basic import *
+from tuto.util.utils import *
 
 
-SQL_INSERT_URL = "insert into siteurl (temp_id,url,status,crdate) values(%s,%s,%s,now())"
+SQL_INSERT_URL = "insert into siteurl (temp_id,url,urltext,cat,relate_url1,status,crdate) values(%s,%s,%s,%s,%s,%s,now())"
+SQL_UPDATE_URL = "update siteurl set urltext=%s,cat=%s where url=%s"
 SQL_INSERT_STEMPLATE = "insert into stemplate (sitekey,itemskeys,pagingkeys,status,crdate) values(%s,%s,%s,%s,now())"
+SQL_INSERT_ITEM = "insert into siteitem (url1,name,item_type,crdate) values(%s,%s,%s,now())"
 
 class DataMgr(Singleton):
     objs_locker =  threading.Lock()
@@ -51,9 +54,15 @@ class DataMgr(Singleton):
         conn.close()
         return result
 
-    def geturls(self,sitekey,status=1):
-        sql = "select a.*,b.sitekey from siteurl a,stemplate b where a.temp_id=b.id and a.status=%s and b.sitekey=%s"
-        params = [status,sitekey]
+    def geturls(self,sitekey="",status=1,urlkey=""):
+        sql = "select a.id,a.temp_id,a.url,a.cat,b.sitekey from siteurl a left join stemplate b on a.temp_id=b.id where a.status=%s"
+        params = [status]
+        if (len(sitekey)>0):
+          sql += " and b.sitekey=%s"
+          params.append(sitekey)
+        if (len(urlkey)>0):
+          sql += " and a.url like %s"
+          params.append("%"+urlkey+"%")
         return self.gettable(sql,params)
 
     def getsitetemplates(self,sitekey):
@@ -80,32 +89,50 @@ class DataMgr(Singleton):
       finally:
         self.objs_locker.release()
 
-    def inserturls(self,urls,temp_id=0):
+    def inserturls(self,urls,temp_id=0,relate_url1="",status=0):
       self.objs_locker.acquire()
       try:
         newitems = []
+        updateitems = []
         newurls = []
         for url in urls:
-          if (self.urlsmap.has_key(url)):
-            continue
+          item = self.urlsmap[url[0]]
+          if (item!=None):
+            if (len(url[1])>0 and _isImgUrl(url[1])==False):
+              item[2] = url[1]
+              updateitems.append(item)
+              self.urlsmap[url[0]] = item
+              continue
           newurls.append(url)
-          item = [temp_id,url,0]
+          item = [temp_id,url[0]]
+          if (len(url)>1):        #url text
+            item.append(url[1])
+          else:
+            item.append("")
+          if (len(url)>2):          #cat
+            item.append(url[2])
+          else:
+            item.append(-1)
+
+          item.extend([relate_url1,status])
           newitems.append(item)
-          self.urlsmap[url] = item
+          self.urlsmap[url[0]] = item
 
         if (len(newitems)>0):
           self.update(SQL_INSERT_URL,newitems,True)
+        if (len(updateitems)>0):
+          self.update(SQL_UPDATE_URL,updateitems,True)
         return newurls
       finally:
         self.objs_locker.release()
 
-    def inserturl(self,url,temp_id=0,status=0):
+    def inserturl(self,url,urltext="",cat=-1,relate_url="",temp_id=0,status=0):
       self.objs_locker.acquire()
       try:
         if (self.urlsmap.has_key(url)):return
 
         self.urlsmap[url] = [url,temp_id,status]
-        params = [temp_id,url,0]
+        params = [temp_id,url,urltext,cat,relate_url,0]
         self.update(SQL_INSERT_URL,params)
       finally:
         self.objs_locker.release()
@@ -117,6 +144,13 @@ class DataMgr(Singleton):
     def hasSiteurl(self,url):
       return True
 
+    def insertitems(self,items,itemtype=0):
+      newitems = []
+      for item in items:
+        newitems.append([item[0],item[1],itemtype])
+      self.update(SQL_INSERT_ITEM,newitems,True)
+
+
     @classmethod
     def at(cls):
       print cls
@@ -124,6 +158,8 @@ class DataMgr(Singleton):
 
 aa = DataMgr()
 
-bb = aa.getsitetemplates("sogou.com")
+# bb = aa.getsitetemplates("sogou.com")
+# a = aa.geturls(urlkey='jd.com')
+# print (len(a))
 # for k in bb:
 #     print k[1]
