@@ -47,8 +47,11 @@ def _isImgUrl(url):
   return False
 
 def _filterIgnore(url,ignorekeys=[]):
+  if (url.find("javascript")>0):
+    a = 100
   for ig in ignorekeys:
-    if (url.find(ig)>0):return True
+    if (url.find(ig)>=0):
+      return True
   if (len(url)>500):
     print url
     return True

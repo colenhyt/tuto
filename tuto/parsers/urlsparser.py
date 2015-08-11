@@ -5,6 +5,18 @@ import lxml.html
 import lxml.etree
 from tuto.util.utils import *
 
+def _isImgUrl(url):
+  if (url.find("http")>=0 and (url.find(".jpg")>0 or url.find(".gif")>0 or url.find(".png")>0)):
+    return True
+  return False
+
+def _filterIgnore(url,ignorekeys=[]):
+  for ig in ignorekeys:
+    if (url.find(ig)>0):return True
+  if (len(url)>500):
+    print url
+    return True
+
 def _findUrlText(element):
   text = ""
   if (element.text!=None and len(element.text.strip())>0):
@@ -78,3 +90,8 @@ def test2():
 
 
 # test2()
+
+a = {}
+b = u'http://order.jd.com/center/list.action'
+a[b]=1002
+print a['http://order.jd.com/center/list.action']

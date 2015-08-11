@@ -78,16 +78,16 @@ class DataMgr(Singleton):
         return self.gettable(sql,[wordtype])
 
     def updateurl(self,url,temp_id=0,status=1):
-      self.objs_locker.acquire()
-      try:
+      # self.objs_locker.acquire()
+      # try:
         if (self.urlsmap.has_key(url)):
           self.urlsmap[url][2] = status
           params = [status,url]
           self.update("update siteurl set status=%s where url=%s",params)
         else:
-          self.inserturl(url,temp_id,status)
-      finally:
-        self.objs_locker.release()
+          self.inserturl(url,temp_id=temp_id,status=status)
+      # finally:
+      #   self.objs_locker.release()
 
     def inserturls(self,urls,temp_id=0,relate_url1="",status=0):
       self.objs_locker.acquire()
@@ -96,7 +96,11 @@ class DataMgr(Singleton):
         updateitems = []
         newurls = []
         for url in urls:
-          item = self.urlsmap[url[0]]
+          key = str(url[0])
+          print key,self.urlsmap[key]
+          if (key.find('http://order.jd.com/center/list.action')>=0):
+            a = 10
+          item = self.urlsmap[key]
           if (item!=None):
             if (len(url[1])>0 and _isImgUrl(url[1])==False):
               item[2] = url[1]
@@ -116,26 +120,30 @@ class DataMgr(Singleton):
 
           item.extend([relate_url1,status])
           newitems.append(item)
-          self.urlsmap[url[0]] = item
+          self.urlsmap[key] = item
 
         if (len(newitems)>0):
           self.update(SQL_INSERT_URL,newitems,True)
+          print "新增urls",len(newitems)
         if (len(updateitems)>0):
           self.update(SQL_UPDATE_URL,updateitems,True)
         return newurls
+      except (KeyError):
+        print 'aaa'
       finally:
         self.objs_locker.release()
+        return []
 
     def inserturl(self,url,urltext="",cat=-1,relate_url="",temp_id=0,status=0):
-      self.objs_locker.acquire()
-      try:
+      # self.objs_locker.acquire()
+      # try:
         if (self.urlsmap.has_key(url)):return
 
         self.urlsmap[url] = [url,temp_id,status]
         params = [temp_id,url,urltext,cat,relate_url,0]
         self.update(SQL_INSERT_URL,params)
-      finally:
-        self.objs_locker.release()
+      # finally:
+      #   self.objs_locker.release()
 
     def insertSiteTemplate(self,*params):
       params = [params[0],str(params[1]),str(params[2]),1]

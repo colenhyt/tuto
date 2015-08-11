@@ -33,13 +33,16 @@ class JdSpider(CrawlSpider):
         if (len(self.start_urls)<=0):
          self.start_urls.append("http://www.jd.com")
 
+        print "初始化新url:",len(self.start_urls)
+
         self.urlsparser = UrlsParser()
         self.urlkeys = ["http://channel.","http://list.","http://item."]
-        self.ignorekeys = ["#comments-list","/adclick"]
+        self.urlkeys = [self.sitekey]
+        self.ignorekeys = ["#comments-list","/adclick","javascript:"]
 
     def parse(self, response):
         baseurl = response.url
-        print "连上:"+baseurl
+        print "取回:"+baseurl
         self.datamgr.updateurl(baseurl,status=2)
 
         urlitems = []
